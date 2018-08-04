@@ -3,6 +3,8 @@ import re
 from pickle import dump
 from unicodedata import normalize
 from numpy import array
+import random
+
 
 def load_data(filename):
     """
@@ -45,7 +47,6 @@ def clean_sent_pairs(sent_pairs):
     # prepare translation table for removing punctuation
     table = str.maketrans('', '', string.punctuation)
 
-    print(table)
     for pair in sent_pairs:
         clean_pair = []
         for line in pair:
@@ -65,14 +66,51 @@ def clean_sent_pairs(sent_pairs):
             # store as string
             clean_pair.append(' '.join(line))
         cleaned.append(clean_pair)
-    return array(cleaned)
+    return cleaned
+
+
+def save_clean_data(sentences, filename):
+    """
+    #save a list of clean sentences to file
+    :param sentences:
+    :param filename:
+    :return:
+    """
+    dump(sentences, open(filename, 'wb'))
+    print('Saved: %s' % filename)
+
+
+def split_and_save_data(clean_data,train_ratio=0.7):
+    """
+
+    :param clean_data:
+    :param train_ratio:
+    :return:
+    """
+    total_pairs = len(clean_data)
+    val_ratio = test_ratio = (1-train_ratio)/2
+
+    train_tot = int(train_ratio * total_pairs)
+    val_tot = int(val_ratio * total_pairs)
+
+    train_data = clean_data[:train_tot]
+    val_data = clean_data[train_tot:train_tot+val_tot]
+    test_data = clean_data[train_tot+val_tot:]
+
+    save_clean_data(train_data,"./data/deu-eng/english-german-train.pkl")
+    save_clean_data(val_data, "./data/deu-eng/english-german-val.pkl")
+    save_clean_data(test_data, "./data/deu-eng/english-german-test.pkl")
+
 
 def main():
     filename =  "./data/deu-eng/deu.txt"
     text = load_data(filename)
     pairs = to_pairs(text)
-    clean_sent_pairs(pairs)
+    clean_data = clean_sent_pairs(pairs)
+    random.shuffle(clean_data)
 
+    #Splitting and saving data
+    split_and_save_data(clean_data)
 
 
 if __name__ =="__main__":
